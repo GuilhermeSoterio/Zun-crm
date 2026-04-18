@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker info:*)",
+      "Bash(docker context:*)",
+      "Bash(./node_modules/.bin/prisma generate:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm --filter api dev)",
+      "Bash(curl -s http://localhost:3001/health)",
+      "Bash(pnpm --filter web dev)",
+      "Bash(curl -s http://localhost:3000 -o /dev/null -w \"%{http_code}\")",
+      "Bash(pnpm add:*)",
+      "Bash(curl:*)",
+      "Bash(npx prisma *)",
+      "Bash(xargs grep *)"
+    ]
+  }
+}

@@ -1,0 +1,344 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Clinic {
+  id                  String    @id @default(cuid())
+  name                String
+  email               String    @unique
+  passwordHash        String
+  cnpj                String?   @unique
+  plan                Plan      @default(TRIAL)
+  avgTicket           Decimal?  @db.Decimal(10, 2)
+  whatsappInstance    String?
+  whatsappConnected   Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  patients         Patient[]
+  campaigns        Campaign[]
+  imports          ImportJob[]
+  procedurePrices  ProcedurePrice[]
+  funnels          Funnel[]
+  leads            Lead[]
+  directMessages   DirectMessage[]
+  quickReplies     QuickReply[]
+
+  @@map("clinics")
+}
+
+model ProcedurePrice {
+  id            String   @id @default(cuid())
+  clinicId      String
+  procedureName String   // ex: "Limpeza", "Botox", "Consulta"
+  price         Decimal  @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+
+  @@unique([clinicId, procedureName])
+  @@map("procedure_prices")
+}
+
+model Patient {
+  id                  String    @id @default(cuid())
+  clinicId            String
+  nameEncrypted       String
+  phoneEncrypted      String
+  phoneHash           String
+  lastAppointmentDate DateTime?
+  lastProcedure       String?
+  inactiveDays        Int?
+  optedOut            Boolean   @default(false)
+  optedOutAt          DateTime?
+  source              String    @default("csv_import")
+  externalId          String?
+  tags                String[]  @default([])
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  clinic           Clinic            @relation(fields: [clinicId], references: [id])
+  campaignPatients CampaignPatient[]
+  lead             Lead?
+  directMessages   DirectMessage[]
+
+  @@unique([clinicId, phoneHash])
+  @@index([clinicId])
+  @@index([clinicId, optedOut])
+  @@map("patients")
+}
+
+model Campaign {
+  id           String         @id @default(cuid())
+  clinicId     String
+  name         String
+  status       CampaignStatus @default(DRAFT)
+  targetFilter Json
+  avgTicket    Decimal?       @db.Decimal(10, 2)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  clinic           Clinic            @relation(fields: [clinicId], references: [id])
+  sequences        MessageSequence[]
+  campaignPatients CampaignPatient[]
+
+  @@index([clinicId, status])
+  @@map("campaigns")
+}
+
+model MessageSequence {
+  id           String   @id @default(cuid())
+  campaignId   String
+  stepNumber   Int
+  delayDays    Int
+  templateBody String
+  createdAt    DateTime @default(now())
+
+  campaign Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([campaignId, stepNumber])
+  @@map("message_sequences")
+}
+
+model CampaignPatient {
+  id             String                @id @default(cuid())
+  campaignId     String
+  patientId      String
+  currentStep    Int                   @default(0)
+  status         CampaignPatientStatus @default(PENDING)
+  convertedAt    DateTime?
+  estimatedValue Decimal?              @db.Decimal(10, 2) // ticket estimado (procedimento ou campanha)
+  actualValue    Decimal?              @db.Decimal(10, 2) // valor real informado pela secretária na conversão
+  convertedNote  String?               // observação opcional da secretária
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  campaign Campaign  @relation(fields: [campaignId], references: [id])
+  patient  Patient   @relation(fields: [patientId], references: [id])
+  messages Message[]
+
+  @@unique([campaignId, patientId])
+  @@index([campaignId, status])
+  @@map("campaign_patients")
+}
+
+model Message {
+  id                String        @id @default(cuid())
+  campaignPatientId String
+  sequenceId        String
+  clinicId          String
+  direction         Direction     @default(OUTBOUND)
+  bodyEncrypted     String
+  status            MessageStatus @default(QUEUED)
+  whatsappMessageId String?
+  scheduledAt       DateTime
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  failureReason     String?
+  aiClassification  String?
+  aiConfidence      Float?
+  aiProcessedAt     DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  campaignPatient CampaignPatient @relation(fields: [campaignPatientId], references: [id])
+  sequence        MessageSequence @relation(fields: [sequenceId], references: [id])
+
+  @@index([clinicId, status])
+  @@index([scheduledAt, status])
+  @@index([whatsappMessageId])
+  @@map("messages")
+}
+
+model ImportJob {
+  id            String       @id @default(cuid())
+  clinicId      String
+  filename      String
+  r2Key         String
+  status        ImportStatus @default(PENDING)
+  totalRows     Int?
+  processedRows Int          @default(0)
+  errorRows     Int          @default(0)
+  fieldMapping  Json
+  errorLog      Json?
+  createdAt     DateTime     @default(now())
+  completedAt   DateTime?
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+
+  @@map("import_jobs")
+}
+
+enum Plan {
+  TRIAL
+  STARTER
+  PROFESSIONAL
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum CampaignPatientStatus {
+  PENDING
+  IN_PROGRESS
+  RESPONDED
+  CONVERTED
+  OPTED_OUT
+  FAILED
+}
+
+enum MessageStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  SKIPPED
+}
+
+enum Direction {
+  OUTBOUND
+  INBOUND
+}
+
+enum ImportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Funnel {
+  id        String   @id @default(cuid())
+  clinicId  String
+  name      String
+  color     String   @default("#8b5cf6")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clinic Clinic        @relation(fields: [clinicId], references: [id])
+  stages FunnelStage[]
+  leads  Lead[]
+
+  @@index([clinicId])
+  @@map("funnels")
+}
+
+model FunnelStage {
+  id       String  @id @default(cuid())
+  funnelId String
+  name     String
+  color    String  @default("#64748b")
+  order    Int
+  isWon    Boolean @default(false)
+  isLost   Boolean @default(false)
+
+  funnel Funnel @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  leads  Lead[]
+
+  @@index([funnelId])
+  @@map("funnel_stages")
+}
+
+model Lead {
+  id             String     @id @default(cuid())
+  clinicId       String
+  funnelId       String
+  stageId        String
+  nameEncrypted  String
+  phoneEncrypted String?
+  phoneHash      String?
+  email          String?
+  source         String?
+  notes          String?
+  estimatedValue Decimal?   @db.Decimal(10, 2)
+  status         LeadStatus @default(ACTIVE)
+  wonAt          DateTime?
+  lostAt         DateTime?
+  lostReason     String?
+  patientId      String?    @unique
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  clinic     Clinic         @relation(fields: [clinicId], references: [id])
+  funnel     Funnel         @relation(fields: [funnelId], references: [id])
+  stage      FunnelStage    @relation(fields: [stageId], references: [id])
+  patient    Patient?       @relation(fields: [patientId], references: [id])
+  activities LeadActivity[]
+
+  @@index([clinicId])
+  @@index([funnelId])
+  @@index([stageId])
+  @@map("leads")
+}
+
+model LeadActivity {
+  id        String   @id @default(cuid())
+  leadId    String
+  type      String
+  data      Json?
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@map("lead_activities")
+}
+
+enum LeadStatus {
+  ACTIVE
+  WON
+  LOST
+}
+
+model DirectMessage {
+  id                String        @id @default(cuid())
+  clinicId          String
+  patientId         String?
+  direction         Direction     @default(OUTBOUND)
+  bodyEncrypted     String
+  status            MessageStatus @default(QUEUED)
+  whatsappMessageId String?
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  clinic  Clinic   @relation(fields: [clinicId], references: [id])
+  patient Patient? @relation(fields: [patientId], references: [id])
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([clinicId, patientId, createdAt])
+  @@map("direct_messages")
+}
+
+model QuickReply {
+  id        String   @id @default(cuid())
+  clinicId  String
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+
+  @@index([clinicId])
+  @@map("quick_replies")
+}
