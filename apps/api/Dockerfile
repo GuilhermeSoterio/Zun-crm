@@ -1,4 +1,5 @@
 FROM node:20-slim
+RUN apt-get update -y && apt-get install -y openssl
 RUN npm install -g pnpm@10.33.0
 WORKDIR /app
 
