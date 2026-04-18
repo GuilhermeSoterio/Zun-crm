@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "corepack enable && corepack prepare pnpm@10.33.0 --activate && pnpm install --frozen-lockfile && pnpm --filter api exec prisma generate && pnpm --filter api build"
+buildCommand = "pnpm --filter api exec prisma generate && pnpm --filter api build"
 
 [deploy]
 startCommand = "cd apps/api && sh start.sh"
