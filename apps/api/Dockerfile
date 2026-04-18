@@ -38,4 +38,4 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 WORKDIR /app/apps/api
 EXPOSE 3003
 
-CMD ["node", "dist/server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && node dist/server.js"]
