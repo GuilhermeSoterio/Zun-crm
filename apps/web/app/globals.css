@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Clinical Tech — Light Mode */
+  --background: #F4F6F9;
+  --foreground: #0f172a;
+  --card: #FFFFFF;
+  --card-border: rgba(15, 23, 42, 0.07);
+  --card-hover: #F8FAFC;
+  --primary: #0d9488;
+  --primary-hover: #0f766e;
+  --primary-muted: rgba(13, 148, 136, 0.10);
+  --success: #059669;
+  --success-muted: rgba(5, 150, 105, 0.10);
+  --warning: #d97706;
+  --warning-muted: rgba(217, 119, 6, 0.10);
+  --danger: #dc2626;
+  --danger-muted: rgba(220, 38, 38, 0.10);
+  --info: #0284c7;
+  --info-muted: rgba(2, 132, 199, 0.10);
+  --muted: #94a3b8;
+  --sidebar-bg: #FFFFFF;
+  --sidebar-border: rgba(15, 23, 42, 0.07);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-jakarta), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.12);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.22);
+}
+
+/* Glass — light frosted */
+.glass {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.09);
+}
+
+/* Input */
+.input-base {
+  @apply w-full rounded-xl border px-3.5 py-2.5 text-sm transition-colors;
+  background: #FFFFFF;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: var(--text-primary);
+}
+.input-base:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.10);
+}
+.input-base::placeholder {
+  color: var(--text-muted);
+}
+.input-base option {
+  background: #FFFFFF;
+  color: var(--text-primary);
+}
+
+/* Card */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+/* Status dot pulse */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.5); }
+}
+.pulse-dot {
+  animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Button primary */
+.btn-primary {
+  @apply px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40;
+  background: var(--primary);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.28);
+}

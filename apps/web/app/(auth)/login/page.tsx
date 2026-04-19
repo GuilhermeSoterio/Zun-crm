@@ -1,0 +1,83 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Activity } from 'lucide-react'
+import { api, setToken } from '@/lib/api-client'
+
+export default function LoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    try {
+      const res = await api.post<{ token: string; clinic: { name: string } }>(
+        '/auth/login', { email, password }
+      )
+      setToken(res.token)
+      localStorage.setItem('reativa_clinic', JSON.stringify(res.clinic))
+      router.push('/dashboard')
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4"
+      style={{ background: 'var(--background)' }}>
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col items-center mb-8 gap-3">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+            style={{ background: 'var(--primary)' }}>
+            <Activity size={24} className="text-white" strokeWidth={2.5} />
+          </div>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Reativa</h1>
+            <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>Acesse sua conta</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="card p-7 space-y-4">
+          {error && (
+            <div className="rounded-xl p-3 text-sm"
+              style={{ background: 'var(--danger-muted)', color: 'var(--danger)', border: '1px solid rgba(220,38,38,0.15)' }}>
+              {error}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              required placeholder="seu@email.com" className="input-base" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Senha</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+              required placeholder="••••••••" className="input-base" />
+          </div>
+
+          <button type="submit" disabled={loading} className="btn-primary w-full mt-2">
+            {loading ? 'Entrando...' : 'Entrar'}
+          </button>
+
+          <p className="text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+            Não tem conta?{' '}
+            <Link href="/register" style={{ color: 'var(--primary)' }} className="font-medium hover:underline">
+              Cadastre-se
+            </Link>
+          </p>
+        </form>
+      </div>
+    </div>
+  )
+}
