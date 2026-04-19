@@ -10,6 +10,7 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
 
+RUN cd packages/shared && npx tsc
 RUN pnpm --filter web build
 
 WORKDIR /app/apps/web
