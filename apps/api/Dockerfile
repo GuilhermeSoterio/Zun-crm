@@ -11,6 +11,7 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
 
+RUN pnpm --filter @reativa/shared build && echo "Shared OK" && ls packages/shared/dist/index.js
 RUN pnpm --filter api exec prisma generate
 RUN pnpm --filter api build && echo "Build OK" && ls apps/api/dist/server.js
 
