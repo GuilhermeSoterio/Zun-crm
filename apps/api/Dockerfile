@@ -12,7 +12,7 @@ COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
 
 RUN pnpm --filter api exec prisma generate
-RUN pnpm --filter api build
+RUN pnpm --filter api build && echo "Build OK" && ls apps/api/dist/server.js
 
 WORKDIR /app/apps/api
 EXPOSE 3003
