@@ -15,7 +15,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "paths": {
-      "@reativa/shared": ["../../packages/shared/src/index.ts"]
+      "@reativa/shared": ["../../packages/shared/dist/index"]
     }
   },
   "include": ["src/**/*"],
