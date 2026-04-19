@@ -11,11 +11,9 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
 
-RUN cd packages/shared && npx tsc && echo "Shared OK" && ls dist/index.js
 RUN pnpm --filter api exec prisma generate
-RUN pnpm --filter api build && echo "Build OK" && ls apps/api/dist/server.js
 
 WORKDIR /app/apps/api
 EXPOSE 3003
 
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && node dist/server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && npx tsx src/server.ts"]
